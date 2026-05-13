@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerUp Galvanic Cell</title>
+    
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -11,61 +12,92 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              prompt: ['Prompt', 'sans-serif'],
-            }
-          }
-        }
+        theme: { extend: { fontFamily: { prompt: ['Prompt', 'sans-serif'] } } }
       }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         body, .font-prompt { font-family: 'Prompt', sans-serif !important; }
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        window.addEventListener('error', function(event) {
+            document.getElementById('root').innerHTML = `
+                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f8fafc; font-family: 'Prompt', sans-serif;">
+                    <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-width: 500px; text-align: center;">
+                        <span style="font-size: 50px; margin-bottom: 20px; display: block;">⚠️</span>
+                        <h2 style="font-size: 20px; font-weight: bold; color: #0f172a; margin-bottom: 10px;">เกิดข้อผิดพลาดในการโหลดระบบ</h2>
+                        <p style="background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 10px; font-size: 14px; text-align: left; word-break: break-all;">
+                            <strong>Error:</strong> ${event.message}<br/><strong>Line:</strong> ${event.lineno}
+                        </p>
+                        <button onclick="window.location.reload()" style="margin-top: 20px; background: #0f172a; color: white; padding: 10px 30px; border-radius: 10px; font-weight: bold; cursor: pointer;">รีเฟรชหน้าจอ</button>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-slate-50">
+    <div id="root">
+        <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Prompt', sans-serif;">
+            <div style="width: 50px; height: 50px; border: 5px solid #e2e8f0; border-top-color: #10b981; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+            <h2 style="font-weight: bold; color: #475569; font-size: 18px;">กำลังโหลดระบบจำลอง...</h2>
+            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+        </div>
+    </div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         // ==========================================
-        // MOCK FIREBASE FOR GITHUB PAGES (Standalone Mode)
+        // MOCK FIREBASE DB (ป้องกัน LocalStorage โดนบล็อกจนจอขาว)
         // ==========================================
-        let app = true, auth = true, db = true, appId = 'default-app-id';
-        const signInAnonymously = async () => {};
-        const signInWithCustomToken = async () => {};
-        const onAuthStateChanged = (a, cb) => { cb({ uid: 'local-user' }); return () => {}; };
-        const doc = (d, ...paths) => paths.join('/');
-        const setDoc = async (id, data, opts) => {
-            let students = JSON.parse(localStorage.getItem('students_data') || '{}');
-            students[id] = { ...students[id], ...data };
-            localStorage.setItem('students_data', JSON.stringify(students));
+        let inMemoryDB = {};
+        try {
+            inMemoryDB = JSON.parse(localStorage.getItem('students_data') || '{}');
+        } catch(e) {
+            console.warn("เบราว์เซอร์บล็อก LocalStorage ระบบจะเปลี่ยนไปใช้ Memory DB ชั่วคราว");
+        }
+
+        const syncDB = () => {
+            try { localStorage.setItem('students_data', JSON.stringify(inMemoryDB)); } catch(e) {}
             window.dispatchEvent(new Event('storage_update'));
         };
+
+        const setDoc = async (id, data, opts) => {
+            inMemoryDB[id] = { ...inMemoryDB[id], ...data };
+            syncDB();
+        };
+
+        const deleteDoc = async (id) => {
+            delete inMemoryDB[id];
+            syncDB();
+        };
+
         const collection = (d, ...paths) => paths.join('/');
+        const doc = (d, ...paths) => paths.join('/');
         const onSnapshot = (col, cb) => {
             const trigger = () => {
-                let students = JSON.parse(localStorage.getItem('students_data') || '{}');
-                let docs = Object.keys(students).map(k => ({ id: k, data: () => students[k] }));
+                let docs = Object.keys(inMemoryDB).map(k => ({ id: k, data: () => inMemoryDB[k] }));
                 cb({ forEach: (fn) => docs.forEach(fn) });
             };
             trigger();
             window.addEventListener('storage_update', trigger);
             return () => window.removeEventListener('storage_update', trigger);
         };
-        const deleteDoc = async (id) => {
-            let students = JSON.parse(localStorage.getItem('students_data') || '{}');
-            delete students[id];
-            localStorage.setItem('students_data', JSON.stringify(students));
-            window.dispatchEvent(new Event('storage_update'));
-        };
+        
+        let app = true, auth = true, db = true, appId = 'default-app-id';
+        const signInAnonymously = async () => {};
+        const signInWithCustomToken = async () => {};
+        const onAuthStateChanged = (a, cb) => { cb({ uid: 'local-user' }); return () => {}; };
 
         // ==========================================
         // 1. DICTIONARY & TRANSLATIONS
@@ -214,7 +246,7 @@
           { id: 2, q: { th: "2. ต่อไปนี้คือหน้าที่หลักของสะพานเกลือ (Salt Bridge)", en: "2. Which of the following is the main function of a salt bridge?" }, options: { th: ["รักษาสมดุลของประจุไฟฟ้าในแต่ละครึ่งเซลล์", "เพิ่มความต่างศักย์ให้แก่เซลล์กัลวานิก", "เร่งปฏิกิริยารีดอกซ์ให้เกิดขึ้นรวดเร็วขึ้น", "เป็นทางผ่านของอิเล็กตรอนระหว่างสองครึ่งเซลล์"], en: ["Maintain electrical neutrality in each half-cell", "Increase the potential difference of the cell", "Accelerate the redox reaction", "Act as a pathway for electrons between half-cells"] }, ans: 0 },
           { id: 3, q: { th: "3. กำหนดให้ค่า E⁰ ของครึ่งเซลล์เป็นดังนี้ เมื่อนำมาต่อเป็นเซลล์กัลวานิก ค่า E⁰cell จะมีค่าเท่าใด", en: "3. Given the E⁰ values of the half-cells below. When connected as a galvanic cell, what is the E⁰cell?" }, image: Q3Image, options: { th: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"], en: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"] }, ans: 1 },
           { id: 4, q: { th: "4. จากแผนภาพเซลล์ดังต่อไปนี้ Zn(s)|Zn²⁺(aq)||Cu²⁺(aq)|Cu(s) ข้อใดอธิบายทิศทางการไหลของอิเล็กตรอนได้ถูกต้อง", en: "4. From the cell diagram Zn(s)|Zn²⁺(aq)||Cu²⁺(aq)|Cu(s), which correctly describes the electron flow?" }, options: { th: ["ไหลจากสารละลาย Cu²⁺ ไปยังสารละลาย Zn²⁺", "ไหลจากขั้ว Zn ไปยังขั้ว Cu ผ่านสะพานเกลือ", "ไหลจากขั้ว Zn ไปยังขั้ว Cu ผ่านสายไฟ", "ไหลจากขั้ว Cu ไปยังขั้ว Zn ผ่านสายไฟ"], en: ["From Cu²⁺ solution to Zn²⁺ solution", "From Zn to Cu via salt bridge", "From Zn to Cu via wire", "From Cu to Zn via wire"] }, ans: 2 },
-          { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วไฟฟ้าในเซลล์กัลวานิก มีการเปลี่ยนแปลงอย่างไร", en: "5. Over time, how does the mass of the electrodes in a galvanic cell change?" }, options: { th: ["ขั้วแอโนดมวลเพิ่มขึ้น ขั้วแคโทดมวลลดลง", "มวลของทั้งสองขั้วลดลง", "มวลของทั้งสองขั้วเพิ่มขึ้น", "ขั้วแอโนดมวลลดลง ขั้วแคโทดมวลเพิ่มขึ้น"], en: ["Anode mass increases, cathode mass decreases", "Mass of both electrodes decreases", "Mass of both electrodes increases", "Anode mass decreases, cathode mass increases"] }, ans: 3 },
+          { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วไฟฟ้าในเซลล์กัลวานิก มีการเปลี่ยนแปลงอย่างไร", en: "5. Over time, how does the mass of the electrodesใน a galvanic cell change?" }, options: { th: ["ขั้วแอโนดมวลเพิ่มขึ้น ขั้วแคโทดมวลลดลง", "มวลของทั้งสองขั้วลดลง", "มวลของทั้งสองขั้วเพิ่มขึ้น", "ขั้วแอโนดมวลลดลง ขั้วแคโทดมวลเพิ่มขึ้น"], en: ["Anode mass increases, cathode mass decreases", "Mass of both electrodes decreases", "Mass of both electrodes increases", "Anode mass decreases, cathode mass increases"] }, ans: 3 },
           { id: 6, q: { th: "6. ปฏิกิริยารวมของเซลล์ Ag(s)|Ag⁺(aq)||Fe²⁺(aq)|Fe(s) ข้อใดต่อไปนี้เขียนสมการรีดอกซ์ได้ถูกต้อง", en: "6. Given the cell diagram Ag(s)|Ag⁺(aq)||Fe²⁺(aq)|Fe(s), which is the correct overall redox equation?" }, options: { th: ["Ag⁺(aq) + Fe(s) → Ag(s) + Fe²⁺(aq)", "Ag(s) + Fe²⁺(aq) → Ag⁺(aq) + Fe(s)", "Ag⁺(aq) + Fe²⁺(aq) → Ag(s) + Fe(s)", "2Ag(s) + Fe²⁺(aq) → 2Ag⁺(aq) + Fe(s)"], en: ["Ag⁺(aq) + Fe(s) → Ag(s) + Fe²⁺(aq)", "Ag(s) + Fe²⁺(aq) → Ag⁺(aq) + Fe(s)", "Ag⁺(aq) + Fe²⁺(aq) → Ag(s) + Fe(s)", "2Ag(s) + Fe²⁺(aq) → 2Ag⁺(aq) + Fe(s)"] }, ans: 3 },
           { id: 7, q: { th: "7. หากค่า E⁰cell ของปฏิกิริยาหนึ่งเป็นลบ หมายความว่าอย่างไร", en: "7. If the E⁰cell of a reaction is negative, what does it mean?" }, options: { th: ["มีการใช้สะพานเกลือผิดประเภท", "ปฏิกิริยานี้เกิดขึ้นได้รวดเร็วมาก", "เซลล์กัลป์วานิกนี้ประสิทธิภาพสูง", "ปฏิกิริยานี้ไม่สามารถเกิดขึ้นได้เอง"], en: ["Wrong type of salt bridge is used", "The reaction occurs very fast", "The galvanic cell is highly efficient", "The reaction cannot occur spontaneously"] }, ans: 3 },
           { id: 8, q: { th: "8. เมื่อนำครึ่งเซลล์ไฮโดรเจนมาตรฐาน (SHE) มาต่อกับครึ่งเซลล์ Zn²⁺|Zn ซึ่งมี E⁰ = -0.76 V ขั้วไฮโดรเจนจะทำหน้าที่อะไร", en: "8. When a Standard Hydrogen Electrode (SHE) is connected to a Zn²⁺|Zn half-cell (E⁰ = -0.76 V), what is the role of the hydrogen electrode?" }, options: { th: ["ขั้วแอโนด", "ไม่ทำหน้าที่ใด ๆ เพราะมีค่า E⁰ = 0", "ขั้วแคโทด", "เป็นได้ทั้งแอโนดและแคโทดพร้อมกัน"], en: ["Anode", "No role because its E⁰ = 0", "Cathode", "Both Anode and Cathode simultaneously"] }, ans: 2 },
