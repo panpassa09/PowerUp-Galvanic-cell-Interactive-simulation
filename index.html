@@ -6,19 +6,15 @@
     <title>PowerUp Galvanic Cell</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-            "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-            "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
-        }
-    }
-    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap');
@@ -30,7 +26,11 @@
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div style="display: flex; justify-content: center; items-center; height: 100vh; font-family: 'Prompt', sans-serif; color: #10b981; font-weight: bold; font-size: 20px; align-items: center;">
+            กำลังโหลดระบบการเรียนรู้...
+        </div>
+    </div>
 
     <script>
         window.__firebase_config = JSON.stringify({
@@ -44,24 +44,32 @@
         window.__app_id = "powerup-galvanic-cell-app";
     </script>
 
-    <script type="text/babel" data-type="module">
-        import { createRoot } from 'react-dom/client';
-        import React, { useState, useEffect, useRef } from 'react';
-        import { initializeApp } from 'firebase/app';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+    <script type="text/babel">
+        // ดึง Hook ต่างๆ ออกมาจาก React Global Object
+        const { useState, useEffect, useRef } = React;
+        const { createRoot } = ReactDOM;
 
+        // ==========================================
+        // ตั้งค่า Firebase ด้วยระบบ Compat API
+        // ==========================================
         let app, auth, db, appId = 'default-app-id';
-        if (typeof window !== 'undefined' && typeof __firebase_config !== 'undefined') {
+        if (typeof window !== 'undefined' && typeof window.__firebase_config !== 'undefined') {
           try {
-            const firebaseConfig = JSON.parse(__firebase_config);
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(window.__firebase_config);
+            if (!firebase.apps.length) {
+                app = firebase.initializeApp(firebaseConfig);
+            } else {
+                app = firebase.app();
+            }
+            auth = firebase.auth();
+            db = firebase.firestore();
+            appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
           } catch(e) { console.error("Firebase init failed:", e); }
         }
 
+        // ==========================================
+        // 1. DICTIONARY & TRANSLATIONS
+        // ==========================================
         const dict = {
           th: {
             appTitle: "PowerUp Galvanic Cell",
@@ -206,7 +214,7 @@
           { id: 2, q: { th: "2. ต่อไปนี้คือหน้าที่หลักของสะพานเกลือ (Salt Bridge)", en: "2. Which of the following is the main function of a salt bridge?" }, options: { th: ["รักษาสมดุลของประจุไฟฟ้าในแต่ละครึ่งเซลล์", "เพิ่มความต่างศักย์ให้แก่เซลล์กัลวานิก", "เร่งปฏิกิริยารีดอกซ์ให้เกิดขึ้นรวดเร็วขึ้น", "เป็นทางผ่านของอิเล็กตรอนระหว่างสองครึ่งเซลล์"], en: ["Maintain electrical neutrality in each half-cell", "Increase the potential difference of the cell", "Accelerate the redox reaction", "Act as a pathway for electrons between half-cells"] }, ans: 0 },
           { id: 3, q: { th: "3. กำหนดให้ค่า E⁰ ของครึ่งเซลล์เป็นดังนี้ เมื่อนำมาต่อเป็นเซลล์กัลวานิก ค่า E⁰cell จะมีค่าเท่าใด", en: "3. Given the E⁰ values of the half-cells below. When connected as a galvanic cell, what is the E⁰cell?" }, image: Q3Image, options: { th: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"], en: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"] }, ans: 1 },
           { id: 4, q: { th: "4. จากแผนภาพเซลล์ดังต่อไปนี้ Zn(s)|Zn²⁺(aq)||Cu²⁺(aq)|Cu(s) ข้อใดอธิบายทิศทางการไหลของอิเล็กตรอนได้ถูกต้อง", en: "4. From the cell diagram Zn(s)|Zn²⁺(aq)||Cu²⁺(aq)|Cu(s), which correctly describes the electron flow?" }, options: { th: ["ไหลจากสารละลาย Cu²⁺ ไปยังสารละลาย Zn²⁺", "ไหลจากขั้ว Zn ไปยังขั้ว Cu ผ่านสะพานเกลือ", "ไหลจากขั้ว Zn ไปยังขั้ว Cu ผ่านสายไฟ", "ไหลจากขั้ว Cu ไปยังขั้ว Zn ผ่านสายไฟ"], en: ["From Cu²⁺ solution to Zn²⁺ solution", "From Zn to Cu via salt bridge", "From Zn to Cu via wire", "From Cu to Zn via wire"] }, ans: 2 },
-          { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วไฟฟ้าในเซลล์กัลวานิก มีการเปลี่ยนแปลงอย่างไร", en: "5. Over time, how does the mass of the electrodesใน a galvanic cell change?" }, options: { th: ["ขั้วแอโนดมวลเพิ่มขึ้น ขั้วแคโทดมวลลดลง", "มวลของทั้งสองขั้วลดลง", "มวลของทั้งสองขั้วเพิ่มขึ้น", "ขั้วแอโนดมวลลดลง ขั้วแคโทดมวลเพิ่มขึ้น"], en: ["Anode mass increases, cathode mass decreases", "Mass of both electrodes decreases", "Mass of both electrodes increases", "Anode mass decreases, cathode mass increases"] }, ans: 3 },
+          { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วไฟฟ้าในเซลล์กัลวานิก มีการเปลี่ยนแปลงอย่างไร", en: "5. Over time, how does the mass of the electrodes in a galvanic cell change?" }, options: { th: ["ขั้วแอโนดมวลเพิ่มขึ้น ขั้วแคโทดมวลลดลง", "มวลของทั้งสองขั้วลดลง", "มวลของทั้งสองขั้วเพิ่มขึ้น", "ขั้วแอโนดมวลลดลง ขั้วแคโทดมวลเพิ่มขึ้น"], en: ["Anode mass increases, cathode mass decreases", "Mass of both electrodes decreases", "Mass of both electrodes increases", "Anode mass decreases, cathode mass increases"] }, ans: 3 },
           { id: 6, q: { th: "6. ปฏิกิริยารวมของเซลล์ Ag(s)|Ag⁺(aq)||Fe²⁺(aq)|Fe(s) ข้อใดต่อไปนี้เขียนสมการรีดอกซ์ได้ถูกต้อง", en: "6. Given the cell diagram Ag(s)|Ag⁺(aq)||Fe²⁺(aq)|Fe(s), which is the correct overall redox equation?" }, options: { th: ["Ag⁺(aq) + Fe(s) → Ag(s) + Fe²⁺(aq)", "Ag(s) + Fe²⁺(aq) → Ag⁺(aq) + Fe(s)", "Ag⁺(aq) + Fe²⁺(aq) → Ag(s) + Fe(s)", "2Ag(s) + Fe²⁺(aq) → 2Ag⁺(aq) + Fe(s)"], en: ["Ag⁺(aq) + Fe(s) → Ag(s) + Fe²⁺(aq)", "Ag(s) + Fe²⁺(aq) → Ag⁺(aq) + Fe(s)", "Ag⁺(aq) + Fe²⁺(aq) → Ag(s) + Fe(s)", "2Ag(s) + Fe²⁺(aq) → 2Ag⁺(aq) + Fe(s)"] }, ans: 3 },
           { id: 7, q: { th: "7. หากค่า E⁰cell ของปฏิกิริยาหนึ่งเป็นลบ หมายความว่าอย่างไร", en: "7. If the E⁰cell of a reaction is negative, what does it mean?" }, options: { th: ["มีการใช้สะพานเกลือผิดประเภท", "ปฏิกิริยานี้เกิดขึ้นได้รวดเร็วมาก", "เซลล์กัลป์วานิกนี้ประสิทธิภาพสูง", "ปฏิกิริยานี้ไม่สามารถเกิดขึ้นได้เอง"], en: ["Wrong type of salt bridge is used", "The reaction occurs very fast", "The galvanic cell is highly efficient", "The reaction cannot occur spontaneously"] }, ans: 3 },
           { id: 8, q: { th: "8. เมื่อนำครึ่งเซลล์ไฮโดรเจนมาตรฐาน (SHE) มาต่อกับครึ่งเซลล์ Zn²⁺|Zn ซึ่งมี E⁰ = -0.76 V ขั้วไฮโดรเจนจะทำหน้าที่อะไร", en: "8. When a Standard Hydrogen Electrode (SHE) is connected to a Zn²⁺|Zn half-cell (E⁰ = -0.76 V), what is the role of the hydrogen electrode?" }, options: { th: ["ขั้วแอโนด", "ไม่ทำหน้าที่ใด ๆ เพราะมีค่า E⁰ = 0", "ขั้วแคโทด", "เป็นได้ทั้งแอโนดและแคโทดพร้อมกัน"], en: ["Anode", "No role because its E⁰ = 0", "Cathode", "Both Anode and Cathode simultaneously"] }, ans: 2 },
@@ -216,7 +224,6 @@
 
         const lcm = (a, b) => { const gcd = (x, y) => (!y ? x : gcd(y, x % y)); return (a * b) / gcd(a, b); };
 
-        // [ FIX ] เพิ่มการจำกัดขนาดภาพแบบแข็ง (Hardcode) ในแท็ก style ของ Component Icon หลักทั้งหมด
         const TeacherIcon = ({ className, style }) => (
           <svg className={className} style={{ maxWidth: '144px', maxHeight: '144px', width: '100%', height: 'auto', ...style }} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M 12 25 L 14 19 L 20 17 L 14 15 L 12 9 L 10 15 L 4 17 L 10 19 Z" fill="#fcd34d" />
@@ -365,8 +372,8 @@
           const handleDelete = async (uid) => {
             if (window.confirm(t.deleteConfirm)) {
               try {
-                const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'students', uid));
+                const currentAppId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+                await db.collection('artifacts').doc(currentAppId).collection('public').doc('data').collection('students').doc(uid).delete();
               } catch (err) {
                 console.error("Error deleting document:", err);
               }
@@ -1570,14 +1577,18 @@
           useEffect(() => {
             if (!auth) return;
             const initAuth = async () => {
-              if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token).catch(e=>console.error(e));
+              if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
+                try {
+                  await auth.signInWithCustomToken(window.__initial_auth_token);
+                } catch(e) { console.error(e); }
               } else {
-                await signInAnonymously(auth).catch(e=>console.error(e));
+                try {
+                  await auth.signInAnonymously();
+                } catch(e) { console.error(e); }
               }
             };
             initAuth();
-            const unsubscribe = onAuthStateChanged(auth, (u) => { setUser(u); });
+            const unsubscribe = auth.onAuthStateChanged((u) => { setUser(u); });
             return () => unsubscribe();
           }, []);
 
@@ -1586,8 +1597,6 @@
               if (!db || !user || !userInfo) return;
               try {
                 const studentDocId = `${userInfo.room.replace('/', '-')}_${userInfo.number}`;
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', studentDocId);
-                
                 const payload = {
                   uid: user.uid,
                   name: userInfo.name,
@@ -1599,7 +1608,7 @@
                 if (pretestScore !== null && pretestScore !== undefined) payload.pretestScore = pretestScore;
                 if (posttestScore !== null && posttestScore !== undefined) payload.posttestScore = posttestScore;
 
-                await setDoc(docRef, payload, { merge: true });
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students').doc(studentDocId).set(payload, { merge: true });
               } catch(e) { console.error("DB Write Error:", e); }
             };
 
@@ -1612,7 +1621,7 @@
 
           useEffect(() => {
             if (view === 'dashboard' && db && user) {
-              const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'students'), (snapshot) => {
+              const unsub = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students').onSnapshot((snapshot) => {
                 const list = [];
                 snapshot.forEach(d => list.push({ id: d.id, ...d.data() }));
                 setStudentsData(list);
