@@ -7,8 +7,12 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -18,8 +22,6 @@
 
         // ==========================================
         // MOCK FIREBASE FOR GITHUB PAGES (Standalone Mode)
-        // จำลองระบบฐานข้อมูลด้วย LocalStorage เพื่อให้ระบบครูและนักเรียนทำงานได้ 100% 
-        // โดยไม่ต้องใช้ Firebase (ตัดปัญหาการตั้งค่า Config)
         // ==========================================
         let app = true, auth = true, db = true, appId = 'default-app-id';
         const signInAnonymously = async () => {};
@@ -51,7 +53,7 @@
         };
 
         // ==========================================
-        // 1. DICTIONARY & TRANSLATIONS (โค้ดดั้งเดิมของคุณทั้งหมด)
+        // 1. DICTIONARY & TRANSLATIONS
         // ==========================================
         const dict = {
           th: {
@@ -354,7 +356,7 @@
           const handleDelete = async (uid) => {
             if (window.confirm(t.deleteConfirm)) {
               try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid));
+                await deleteDoc(uid);
               } catch (err) {
                 console.error("Error deleting document:", err);
               }
@@ -382,22 +384,49 @@
             document.body.removeChild(link);
           };
 
+          // ==========================================
+          // อัปเดตส่วนของการ Export PDF
+          // ==========================================
           const exportPDF = async () => {
-            if (!window.html2canvas || !window.jspdf) return alert("กำลังโหลด PDF");
-            const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-            const chunkSize = 20;
-            const pages = Math.ceil(filteredStudents.length / chunkSize) || 1;
+            try {
+              if (!window.html2canvas || !window.jspdf) {
+                alert("ไลบรารีสำหรับสร้าง PDF ยังโหลดไม่เสร็จ กรุณารอสักครู่แล้วลองใหม่ครับ");
+                return;
+              }
+              
+              // เรียกใช้ jsPDF อย่างถูกต้อง
+              const { jsPDF } = window.jspdf;
+              const pdf = new jsPDF('p', 'mm', 'a4');
+              
+              const chunkSize = 20;
+              const pages = Math.ceil(filteredStudents.length / chunkSize) || 1;
 
-            for (let p = 0; p < pages; p++) {
-              const el = document.getElementById(`pdf-page-${p}`);
-              if (!el) continue;
-              el.style.display = 'block';
-              const canvas = await window.html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-              el.style.display = 'none';
-              if (p > 0) pdf.addPage();
-              pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), (canvas.height * pdf.internal.pageSize.getWidth()) / canvas.width);
+              for (let p = 0; p < pages; p++) {
+                const el = document.getElementById(`pdf-page-${p}`);
+                if (!el) continue;
+                
+                // สลับ display เป็น block เพื่อให้ html2canvas มองเห็น
+                const originalDisplay = el.style.display;
+                el.style.display = 'block';
+                
+                const canvas = await window.html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                
+                // คืนค่า display กลับเป็นค่าเดิม
+                el.style.display = originalDisplay;
+                
+                if (p > 0) pdf.addPage();
+                
+                const imgData = canvas.toDataURL('image/png');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+              }
+              pdf.save(`Teacher_Report_${filterRoom}.pdf`);
+            } catch (error) {
+              console.error("PDF Export Error: ", error);
+              alert("เกิดข้อผิดพลาดในการสร้าง PDF");
             }
-            pdf.save(`Teacher_Report_${filterRoom}.pdf`);
           };
 
           const chunks = [];
