@@ -5,33 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PowerUp Galvanic Cell</title>
 
-  <!-- 🟢 ระบบดักจับ Error: ถ้าเว็บพังจะไม่จอขาว แต่จะขึ้นกล่องสีแดงให้ครูถ่ายรูปมาครับ 🟢 -->
+  <!-- ระบบดักจับ Error ขั้นสูง: จะไม่เกิดหน้าจอขาวอีกต่อไป -->
   <script>
     window.addEventListener('error', function(event) {
+      var msg = event.message || 'Unknown Error';
+      if (msg === 'Script error.') msg = 'Script error. (เบราว์เซอร์บล็อกการโหลดไฟล์ CDN หรือมีปัญหาอินเทอร์เน็ต กรุณากด Hard Refresh)';
       document.body.innerHTML = '<div style="color:#7f1d1d; padding:30px; font-family:sans-serif; background:#fef2f2; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; overflow:auto;">' +
-        '<h2 style="font-size:24px; font-weight:bold; margin-bottom:10px;">🚨 เกิดข้อผิดพลาดในระบบ (Error)</h2>' +
-        '<p style="font-size:16px; margin-bottom:10px;"><strong>ข้อความ:</strong> ' + event.message + '</p>' +
-        '<p style="font-size:16px; margin-bottom:10px;"><strong>พบที่บรรทัด:</strong> ' + event.lineno + '</p>' +
-        '<p style="font-size:16px; margin-bottom:20px;">กรุณาถ่ายรูปหน้าจอนี้ส่งให้ผู้พัฒนาดูได้เลยครับ 🙏</p>' +
-        '<pre style="background:#ffffff; padding:15px; border-radius:8px; border:1px solid #fca5a5; font-size:12px; white-space:pre-wrap;">' + (event.error ? event.error.stack : 'No stack trace') + '</pre>' +
-        '</div>';
+        '<h2 style="font-size:24px; font-weight:bold; margin-bottom:10px;">🚨 เกิดข้อผิดพลาดในระบบ (Global Error)</h2>' +
+        '<p style="font-size:16px; margin-bottom:10px;"><strong>ข้อความ:</strong> ' + msg + '</p>' +
+        '<p style="font-size:16px; margin-bottom:20px;">กรุณาถ่ายรูปหน้าจอนี้ส่งให้ผู้พัฒนาดูได้เลยครับ 🙏</p></div>';
+    });
+    window.addEventListener('unhandledrejection', function(event) {
+      document.body.innerHTML = '<div style="color:#7f1d1d; padding:30px; font-family:sans-serif; background:#fef2f2; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; overflow:auto;">' +
+        '<h2 style="font-size:24px; font-weight:bold; margin-bottom:10px;">🚨 เกิดข้อผิดพลาดในฐานข้อมูล (Promise Rejection)</h2>' +
+        '<p style="font-size:16px; margin-bottom:10px;"><strong>สาเหตุ:</strong> ' + (event.reason ? event.reason.toString() : 'Unknown') + '</p></div>';
     });
   </script>
 
-  <!-- โหลด Tailwind CSS -->
+  <!-- เปลี่ยนมาใช้ Cloudflare CDN ทั้งหมดเพื่อความเสถียร 100% -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js" crossorigin="anonymous"></script>
 
-  <!-- โหลด React & ReactDOM -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-
-  <!-- โหลด Babel สำหรับคอมไพล์ JSX -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- โหลด Firebase แบบ Compat (เสถียรที่สุดสำหรับ HTML ไฟล์เดียว ไม่โดน Safari บล็อกแน่นอน) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- โหลด Firebase แบบ Compat Version -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-auth-compat.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-firestore-compat.min.js" crossorigin="anonymous"></script>
 
 </head>
 <body class="bg-slate-50">
@@ -39,9 +39,11 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+    const useState = React.useState;
+    const useEffect = React.useEffect;
+    const useRef = React.useRef;
 
-    // 🟢 ตั้งค่า Firebase ของครูป่าน 🟢
+    // 🟢 1. กุญแจ Firebase ของครูป่าน 🟢
     const firebaseConfig = {
       apiKey: "AIzaSyCwMlaSbPOyHQ6zpfm5_f20WUDQiBXY3fg",
       authDomain: "galvanic-cell-simulation.firebaseapp.com",
@@ -52,16 +54,21 @@
       measurementId: "G-5YZLRGLHSH"
     };
 
-    // เชื่อมต่อ Firebase
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+    // เชื่อมต่อ Firebase อย่างปลอดภัย
+    let auth = null, db = null;
+    if (typeof firebase !== 'undefined') {
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+      } catch (err) {
+        console.error("Firebase init error: ", err);
+      }
     }
-    const auth = firebase.auth();
-    const db = firebase.firestore();
     const appId = 'galvanic-cell-simulation';
 
     // ==========================================
-    // 1. DICTIONARY & TRANSLATIONS
+    // DICTIONARY & TRANSLATIONS
     // ==========================================
     const dict = {
       th: {
@@ -363,10 +370,12 @@
 
       const handleDelete = async (uid) => {
         if (window.confirm(t.deleteConfirm)) {
-          try {
-            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students').doc(uid).delete();
-          } catch (err) {
-            console.error("Error deleting document:", err);
+          if (db) {
+             try {
+               await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students').doc(uid).delete();
+             } catch (err) {
+               console.error("Error deleting document:", err);
+             }
           }
         }
       };
