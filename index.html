@@ -5,13 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PowerUp Galvanic Cell</title>
 
+  <!-- 🟢 ระบบดักจับ Error: ถ้าเว็บพังจะไม่จอขาว แต่จะขึ้นกล่องสีแดงให้ครูถ่ายรูปมาครับ 🟢 -->
+  <script>
+    window.addEventListener('error', function(event) {
+      document.body.innerHTML = '<div style="color:#7f1d1d; padding:30px; font-family:sans-serif; background:#fef2f2; position:fixed; top:0; left:0; right:0; bottom:0; z-index:999999; overflow:auto;">' +
+        '<h2 style="font-size:24px; font-weight:bold; margin-bottom:10px;">🚨 เกิดข้อผิดพลาดในระบบ (Error)</h2>' +
+        '<p style="font-size:16px; margin-bottom:10px;"><strong>ข้อความ:</strong> ' + event.message + '</p>' +
+        '<p style="font-size:16px; margin-bottom:10px;"><strong>พบที่บรรทัด:</strong> ' + event.lineno + '</p>' +
+        '<p style="font-size:16px; margin-bottom:20px;">กรุณาถ่ายรูปหน้าจอนี้ส่งให้ผู้พัฒนาดูได้เลยครับ 🙏</p>' +
+        '<pre style="background:#ffffff; padding:15px; border-radius:8px; border:1px solid #fca5a5; font-size:12px; white-space:pre-wrap;">' + (event.error ? event.error.stack : 'No stack trace') + '</pre>' +
+        '</div>';
+    });
+  </script>
+
+  <!-- โหลด Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- โหลด React & ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 
+  <!-- โหลด Babel สำหรับคอมไพล์ JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- โหลด Firebase แบบ Compat (เสถียรที่สุดสำหรับ HTML ไฟล์เดียว ไม่โดน Safari บล็อกแน่นอน) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -35,7 +52,7 @@
       measurementId: "G-5YZLRGLHSH"
     };
 
-    // เชื่อมต่อ Firebase ทันทีแบบ Global
+    // เชื่อมต่อ Firebase
     if (!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }
@@ -1807,7 +1824,6 @@
       );
     }
 
-    // Render App เข้าสู่ DOM
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
