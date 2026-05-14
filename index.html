@@ -27,22 +27,31 @@
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
-    // ปรับการดึง React Hook จาก Global Object (แทนบรรทัด import React)
     const { useState, useEffect, useRef } = React;
 
     import { initializeApp } from 'firebase/app';
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
     import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 
-    let app, auth, db, appId = 'default-app-id';
-    if (typeof window !== 'undefined' && typeof window.__firebase_config !== 'undefined') {
-      try {
-        const firebaseConfig = JSON.parse(window.__firebase_config);
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
-      } catch(e) { console.error("Firebase init failed:", e); }
+    let app, auth, db, appId = 'galvanic-cell-simulation';
+
+    // 🟢 1. รหัส Firebase Config ของครูป่าน (ใส่ให้เรียบร้อยแล้ว) 🟢
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwMlaSbPOyHQ6zpfm5_f20WUDQiBXY3fg",
+      authDomain: "galvanic-cell-simulation.firebaseapp.com",
+      projectId: "galvanic-cell-simulation",
+      storageBucket: "galvanic-cell-simulation.firebasestorage.app",
+      messagingSenderId: "130157386891",
+      appId: "1:130157386891:web:1bc4a53c089124754d088e",
+      measurementId: "G-5YZLRGLHSH"
+    };
+
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+    } catch(e) { 
+      console.error("Firebase init failed:", e); 
     }
 
     // ==========================================
@@ -192,7 +201,7 @@
       { id: 2, q: { th: "2. ต่อไปนี้คือหน้าที่หลักของสะพานเกลือ (Salt Bridge)", en: "2. Which of the following is the main function of a salt bridge?" }, options: { th: ["รักษาสมดุลของประจุไฟฟ้าในแต่ละครึ่งเซลล์", "เพิ่มความต่างศักย์ให้แก่เซลล์กัลวานิก", "เร่งปฏิกิริยารีดอกซ์ให้เกิดขึ้นรวดเร็วขึ้น", "เป็นทางผ่านของอิเล็กตรอนระหว่างสองครึ่งเซลล์"], en: ["Maintain electrical neutrality in each half-cell", "Increase the potential difference of the cell", "Accelerate the redox reaction", "Act as a pathway for electrons between half-cells"] }, ans: 0 },
       { id: 3, q: { th: "3. กำหนดให้ค่า E⁰ ของครึ่งเซลล์เป็นดังนี้ เมื่อนำมาต่อเป็นเซลล์กัลวานิก ค่า E⁰cell จะมีค่าเท่าใด", en: "3. Given the E⁰ values of the half-cells below. When connected as a galvanic cell, what is the E⁰cell?" }, image: Q3Image, options: { th: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"], en: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"] }, ans: 1 },
       { id: 4, q: { th: "4. จากแผนภาพเซลล์ดังต่อไปนี้ Zn(s)|Zn²⁺(aq)||Cu²⁺(aq)|Cu(s) ข้อใดอธิบายทิศทางการไหลของอิเล็กตรอนได้ถูกต้อง", en: "4. From the cell diagram Zn(s)|Zn²⁺(aq)||Cu²⁺(aq)|Cu(s), which correctly describes the electron flow?" }, options: { th: ["ไหลจากสารละลาย Cu²⁺ ไปยังสารละลาย Zn²⁺", "ไหลจากขั้ว Zn ไปยังขั้ว Cu ผ่านสะพานเกลือ", "ไหลจากขั้ว Zn ไปยังขั้ว Cu ผ่านสายไฟ", "ไหลจากขั้ว Cu ไปยังขั้ว Zn ผ่านสายไฟ"], en: ["From Cu²⁺ solution to Zn²⁺ solution", "From Zn to Cu via salt bridge", "From Zn to Cu via wire", "From Cu to Zn via wire"] }, ans: 2 },
-      { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วไฟฟ้าในเซลล์กัลวานิก มีการเปลี่ยนแปลงอย่างไร", en: "5. Over time, how does the mass of the electrodes in a galvanic cell change?" }, options: { th: ["ขั้วแอโนดมวลเพิ่มขึ้น ขั้วแคโทดมวลลดลง", "มวลของทั้งสองขั้วลดลง", "มวลของทั้งสองขั้วเพิ่มขึ้น", "ขั้วแอโนดมวลลดลง ขั้วแคโทดมวลเพิ่มขึ้น"], en: ["Anode mass increases, cathode mass decreases", "Mass of both electrodes decreases", "Mass of both electrodes increases", "Anode mass decreases, cathode mass increases"] }, ans: 3 },
+      { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วไฟฟ้าในเซลล์กัลวานิก มีการเปลี่ยนแปลงอย่างไร", en: "5. Over time, how does the mass of the electrodesในเซลล์กัลวานิกเปลี่ยนไปอย่างไร?" }, options: { th: ["ขั้วแอโนดมวลเพิ่มขึ้น ขั้วแคโทดมวลลดลง", "มวลของทั้งสองขั้วลดลง", "มวลของทั้งสองขั้วเพิ่มขึ้น", "ขั้วแอโนดมวลลดลง ขั้วแคโทดมวลเพิ่มขึ้น"], en: ["Anode mass increases, cathode mass decreases", "Mass of both electrodes decreases", "Mass of both electrodes increases", "Anode mass decreases, cathode mass increases"] }, ans: 3 },
       { id: 6, q: { th: "6. ปฏิกิริยารวมของเซลล์ Ag(s)|Ag⁺(aq)||Fe²⁺(aq)|Fe(s) ข้อใดต่อไปนี้เขียนสมการรีดอกซ์ได้ถูกต้อง", en: "6. Given the cell diagram Ag(s)|Ag⁺(aq)||Fe²⁺(aq)|Fe(s), which is the correct overall redox equation?" }, options: { th: ["Ag⁺(aq) + Fe(s) → Ag(s) + Fe²⁺(aq)", "Ag(s) + Fe²⁺(aq) → Ag⁺(aq) + Fe(s)", "Ag⁺(aq) + Fe²⁺(aq) → Ag(s) + Fe(s)", "2Ag(s) + Fe²⁺(aq) → 2Ag⁺(aq) + Fe(s)"], en: ["Ag⁺(aq) + Fe(s) → Ag(s) + Fe²⁺(aq)", "Ag(s) + Fe²⁺(aq) → Ag⁺(aq) + Fe(s)", "Ag⁺(aq) + Fe²⁺(aq) → Ag(s) + Fe(s)", "2Ag(s) + Fe²⁺(aq) → 2Ag⁺(aq) + Fe(s)"] }, ans: 3 },
       { id: 7, q: { th: "7. หากค่า E⁰cell ของปฏิกิริยาหนึ่งเป็นลบ หมายความว่าอย่างไร", en: "7. If the E⁰cell of a reaction is negative, what does it mean?" }, options: { th: ["มีการใช้สะพานเกลือผิดประเภท", "ปฏิกิริยานี้เกิดขึ้นได้รวดเร็วมาก", "เซลล์กัลป์วานิกนี้ประสิทธิภาพสูง", "ปฏิกิริยานี้ไม่สามารถเกิดขึ้นได้เอง"], en: ["Wrong type of salt bridge is used", "The reaction occurs very fast", "The galvanic cell is highly efficient", "The reaction cannot occur spontaneously"] }, ans: 3 },
       { id: 8, q: { th: "8. เมื่อนำครึ่งเซลล์ไฮโดรเจนมาตรฐาน (SHE) มาต่อกับครึ่งเซลล์ Zn²⁺|Zn ซึ่งมี E⁰ = -0.76 V ขั้วไฮโดรเจนจะทำหน้าที่อะไร", en: "8. When a Standard Hydrogen Electrode (SHE) is connected to a Zn²⁺|Zn half-cell (E⁰ = -0.76 V), what is the role of the hydrogen electrode?" }, options: { th: ["ขั้วแอโนด", "ไม่ทำหน้าที่ใด ๆ เพราะมีค่า E⁰ = 0", "ขั้วแคโทด", "เป็นได้ทั้งแอโนดและแคโทดพร้อมกัน"], en: ["Anode", "No role because its E⁰ = 0", "Cathode", "Both Anode and Cathode simultaneously"] }, ans: 2 },
@@ -349,8 +358,7 @@
       const handleDelete = async (uid) => {
         if (window.confirm(t.deleteConfirm)) {
           try {
-            const currentAppId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
-            await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'students', uid));
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid));
           } catch (err) {
             console.error("Error deleting document:", err);
           }
@@ -971,7 +979,7 @@
                     </div>
                     <div className="flex gap-2">
                       <button draggable onDragStart={(e) => { e.dataTransfer.setData('toolType', 'sol'); e.dataTransfer.setData('metalId', m.id); setSelectedTool({ type: 'sol', id: m.id }); }} onClick={() => setSelectedTool({ type: 'sol', id: m.id })} className={`flex-1 text-[10px] md:text-[11px] py-2 rounded-2xl font-bold transition-all border-2 shadow-sm whitespace-nowrap overflow-hidden text-ellipsis ${selectedTool?.type==='sol' && selectedTool?.id===m.id ? 'bg-blue-50 text-blue-700 border-blue-400' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300 hover:bg-slate-50'}`}><BeakerIcon /> {m.solution}</button>
-                      <button draggable onDragStart={(e) => { e.dataTransfer.setData('toolType', 'metal'); e.dataTransfer.setData('metalId', m.id); setSelectedTool({ type: 'metal', id: m.id }); }} onClick={() => setSelectedTool({ type: 'metal', id: m.id })} className={`flex-1 text-[10px] md:text-[11px] py-2 rounded-2xl font-bold transition-all border-2 shadow-sm whitespace-nowrap overflow-hidden text-ellipsis ${selectedTool?.type==='metal' && selectedTool?.id===m.id ? 'bg-slate-700 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300 hover:bg-slate-50'}`}><MetalPlateIcon /> {m.symbol}</button>
+                      <button draggable onDragStart={(e) => { e.dataTransfer.setData('toolType', 'metal'); e.dataTransfer.setData('metalId', m.id); setSelectedTool({ type: 'metal', id: m.id }); }} onClick={() => setSelectedTool({ type: 'metal', id: m.id }); }} className={`flex-1 text-[10px] md:text-[11px] py-2 rounded-2xl font-bold transition-all border-2 shadow-sm whitespace-nowrap overflow-hidden text-ellipsis ${selectedTool?.type==='metal' && selectedTool?.id===m.id ? 'bg-slate-700 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300 hover:bg-slate-50'}`}><MetalPlateIcon /> {m.symbol}</button>
                     </div>
                   </div>
                 ))}
