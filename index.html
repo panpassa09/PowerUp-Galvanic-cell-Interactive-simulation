@@ -12,30 +12,19 @@
 
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <script type="importmap">
-    {
-      "imports": {
-        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js",
-        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-      }
-    }
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 </head>
 <body class="bg-slate-50">
   
   <div id="root"></div>
 
-  <script type="text/babel" data-type="module">
-    // 🟢 แก้ไข: ย้ายคำสั่ง import มาไว้บนสุดเสมอ 🟢
-    import { initializeApp } from 'firebase/app';
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-    import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
-
+  <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
-    let app, auth, db, appId = 'galvanic-cell-simulation';
-
+    // 🟢 ตั้งค่า Firebase ของครูป่าน 🟢
     const firebaseConfig = {
       apiKey: "AIzaSyCwMlaSbPOyHQ6zpfm5_f20WUDQiBXY3fg",
       authDomain: "galvanic-cell-simulation.firebaseapp.com",
@@ -46,13 +35,13 @@
       measurementId: "G-5YZLRGLHSH"
     };
 
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-    } catch(e) { 
-      console.error("Firebase init failed:", e); 
+    // เชื่อมต่อ Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
     }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const appId = 'galvanic-cell-simulation';
 
     // ==========================================
     // 1. DICTIONARY & TRANSLATIONS
@@ -358,7 +347,7 @@
       const handleDelete = async (uid) => {
         if (window.confirm(t.deleteConfirm)) {
           try {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid));
+            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students').doc(uid).delete();
           } catch (err) {
             console.error("Error deleting document:", err);
           }
@@ -1573,26 +1562,28 @@
         document.body.appendChild(script2);
       }, []);
 
+      // ล็อกอินแบบไม่ระบุตัวตน (Anonymous) ทันทีที่เข้าเว็บ
       useEffect(() => {
         if (!auth) return;
         const initAuth = async () => {
-          if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
-            await signInWithCustomToken(auth, window.__initial_auth_token).catch(e=>console.error(e));
-          } else {
-            await signInAnonymously(auth).catch(e=>console.error(e));
+          try {
+            await auth.signInAnonymously();
+          } catch(e) {
+            console.error("Auth error:", e);
           }
         };
         initAuth();
-        const unsubscribe = onAuthStateChanged(auth, (u) => { setUser(u); });
+        const unsubscribe = auth.onAuthStateChanged((u) => { setUser(u); });
         return () => unsubscribe();
       }, []);
 
+      // อัปเดตข้อมูลนักเรียนลงฐานข้อมูล
       useEffect(() => {
         const updateStudentData = async () => {
           if (!db || !user || !userInfo) return;
           try {
             const studentDocId = `${userInfo.room.replace('/', '-')}_${userInfo.number}`;
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'students', studentDocId);
+            const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students').doc(studentDocId);
             
             const payload = {
               uid: user.uid,
@@ -1605,7 +1596,7 @@
             if (pretestScore !== null && pretestScore !== undefined) payload.pretestScore = pretestScore;
             if (posttestScore !== null && posttestScore !== undefined) payload.posttestScore = posttestScore;
 
-            await setDoc(docRef, payload, { merge: true });
+            await docRef.set(payload, { merge: true });
           } catch(e) { console.error("DB Write Error:", e); }
         };
 
@@ -1616,9 +1607,11 @@
         }
       }, [view, userInfo, pretestScore, posttestScore, user]);
 
+      // ดึงข้อมูลนักเรียนมาแสดงที่แดชบอร์ดครู
       useEffect(() => {
         if (view === 'dashboard' && db && user) {
-          const unsub = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'students'), (snapshot) => {
+          const colRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('students');
+          const unsub = colRef.onSnapshot((snapshot) => {
             const list = [];
             snapshot.forEach(d => list.push({ id: d.id, ...d.data() }));
             setStudentsData(list);
