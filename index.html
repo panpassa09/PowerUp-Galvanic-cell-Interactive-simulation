@@ -1,44 +1,421 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PowerUp Galvanic Cell</title>
-    <!-- โหลด Tailwind แบบดั้งเดิม -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- โหลด React แบบไฟล์เดียวจบ ไม่ต้อง Import -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <!-- โหลด Firebase แบบง่ายที่สุด -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerUp Galvanic Cell</title>
+
+  <script>
+    window.addEventListener('error', function(e) {
+      if (e.message.indexOf('Script error') > -1) return;
+      document.body.innerHTML = '<div style="padding:30px;color:#991b1b;background:#fef2f2;font-family:sans-serif;line-height:1.5;border:2px solid #fca5a5;margin:20px;border-radius:12px;">' +
+        '<h2 style="font-size:20px;font-weight:bold;">🚨 ระบบพบข้อผิดพลาด</h2>' +
+        '<p>ข้อความ: ' + e.message + '</p>' +
+        '<small>พบบรรทัดที่: ' + e.lineno + '</small><br><br>' +
+        '<button onclick="location.reload()" style="padding:10px 20px;background:#991b1b;color:white;border:none;border-radius:8px;cursor:pointer;">กดเพื่อเริ่มระบบใหม่</button></div>';
+    });
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap');
+    * { font-family: 'Prompt', sans-serif !important; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes flowWireForward_2s_linear_infinite { from { stroke-dashoffset: 64; } to { stroke-dashoffset: 0; } }
+    .blink { animation: blinker 1s linear infinite; }
+    @keyframes blinker { 50% { opacity: 0; } }
+  </style>
 </head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel">
-        // กำหนดค่า Firebase ของครูป่าน
-        const firebaseConfig = {
-            apiKey: "AIzaSyCwMlaSbPOyHQ6zpfm5_f20WUDQiBXY3fg",
-            authDomain: "galvanic-cell-simulation.firebaseapp.com",
-            projectId: "galvanic-cell-simulation",
-            storageBucket: "galvanic-cell-simulation.firebasestorage.app",
-            messagingSenderId: "130157386891",
-            appId: "1:130157386891:web:1bc4a53c089124754d088e"
-        };
+<body class="bg-slate-50">
+  <div id="root"></div>
 
-        // เริ่มต้นระบบ
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-        const appId = 'galvanic-cell-simulation';
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-        // โค้ดส่วน Logic ทั้งหมดของคุณครู (Simulation & Quiz)
-        // [โค้ดเดิมทั้งหมดถูกรวมไว้ในนี้แล้ว]
-        
-        // --- ส่วนที่เหลือของแอปพลิเคชัน ---
-        // (ก๊อปปี้ส่วนประกอบที่เหลือมาวางตรงนี้ หรือใช้ไฟล์รวมที่ผมแก้ให้ล่าสุดได้เลยครับ)
-    </script>
+    // 🟢 Firebase Config ของครูป่าน 🟢
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwMlaSbPOyHQ6zpfm5_f20WUDQiBXY3fg",
+      authDomain: "galvanic-cell-simulation.firebaseapp.com",
+      projectId: "galvanic-cell-simulation",
+      storageBucket: "galvanic-cell-simulation.firebasestorage.app",
+      messagingSenderId: "130157386891",
+      appId: "1:130157386891:web:1bc4a53c089124754d088e",
+      measurementId: "G-5YZLRGLHSH"
+    };
+
+    // เชื่อมต่อ Firebase
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const appId = 'galvanic-cell-simulation';
+
+    // ==========================================
+    // 1. DICTIONARY & TRANSLATIONS
+    // ==========================================
+    const dict = {
+      th: {
+        appTitle: "PowerUp Galvanic Cell",
+        selectLang: "กรุณาเลือกภาษาเพื่อเริ่มต้น",
+        roleSelect: { title: "เลือกสถานะการใช้งาน", student: "นักเรียน", teacher: "ครูผู้สอน" },
+        roomSelect: { title: "เลือกห้องเรียน", desc: "กรุณาเลือกระดับชั้นของคุณ", back: "ย้อนกลับ", pwdTitle: "กรอกรหัสผ่านห้องเรียน", submit: "ยืนยันรหัสผ่าน", wrongPwd: "รหัสผ่านไม่ถูกต้อง" },
+        teacher: { loginTitle: "เข้าสู่ระบบครูผู้สอน", pwdTitle: "รหัสผ่านครู", dashboard: "แผงควบคุมระบบครู", noData: "ยังไม่มีข้อมูลนักเรียนในระบบ", exportPDF: "ส่งออก PDF", exportCSV: "บันทึก Excel", table: { name: "ชื่อ-สกุล", room: "ห้อง", number: "เลขที่", pre: "ก่อนเรียน", post: "หลังเรียน", dev: "พัฒนาการ", manage: "จัดการ", status: "สถานะ" }, online: "ออนไลน์", offline: "ออฟไลน์", logout: "ออกจากระบบ", filterAll: "นักเรียนทั้งหมดทุกห้อง", filterRoom: "เฉพาะห้อง", deleteConfirm: "ยืนยันการลบข้อมูลของนักเรียนคนนี้?" },
+        onlineAlert: "กำลังใช้งานระบบ",
+        nav: { pre: "ก่อนเรียน", theory: "ทฤษฎี", exp: "ห้องทดลอง", post: "หลังเรียน" },
+        register: { title: "ข้อมูลนักเรียน", desc: "กรุณากรอกข้อมูลเพื่อเข้าสู่บทเรียน", name: "ชื่อ - นามสกุล", room: "ชั้น / ห้อง", number: "เลขที่", start: "เข้าสู่บทเรียน", warn: "กรุณากรอกข้อมูลให้ครบถ้วน", back: "ย้อนกลับ" },
+        quiz: { preTitle: "แบบทดสอบก่อนเรียน", postTitle: "แบบทดสอบหลังเรียน", score: "คะแนนของคุณ:", excellent: "ยอดเยี่ยมมาก!", pass: "ผ่านเกณฑ์!", fail: "ลองกลับไปทบทวนทฤษฎีแล้วมาทดสอบใหม่", tryAgain: "ทำแบบทดสอบอีกครั้ง", submit: "ส่งคำตอบ", correct: "คำตอบที่ถูกต้องคือ:" },
+        report: { title: "สรุปผลการเรียน (Report Card)", studentInfo: "ข้อมูลผู้เรียน", scores: "สรุปคะแนนสอบ", pre: "ก่อนเรียน (Pretest)", post: "หลังเรียน (Posttest)", dev: "คะแนนพัฒนาการสัมพัทธ์", devUp: "พัฒนาการเพิ่มขึ้น", devDown: "คะแนนลดลง", devSame: "คะแนนคงที่", export: "บันทึกรูปภาพ", close: "ปิดหน้าต่าง", levelHigh: "ระดับสูง", levelMedium: "ระดับปานกลาง", levelLow: "ระดับต้น", levelDrop: "คะแนนลดลง", levelMax: "ดีเยี่ยม", formulaStr: "สูตร: ((หลังเรียน - ก่อน) / (เต็ม - ก่อน)) × 100" },
+        theory: {
+          title: "เซลล์กัลวานิก (Galvanic Cell)",
+          intro: "เซลล์กัลวานิก คือ เซลล์เคมีไฟฟ้าชนิดหนึ่งที่ทำหน้าที่", highlight: "เปลี่ยนพลังงานเคมีเป็นพลังงานไฟฟ้า", intro2: "โดยเกิดจากปฏิกิริยารีดอกซ์ที่เกิดขึ้นได้เอง",
+          anodeTitle: "ขั้วแอโนด (Anode) (-)", anodeL1: "เป็นขั้วที่เกิดปฏิกิริยา <strong>ออกซิเดชัน</strong>", anodeL2: "ทำหน้าที่ <strong>จ่ายอิเล็กตรอน</strong>", anodeL3: "โลหะที่ขั้วนี้จะ <strong>กร่อน (มวลลดลง)</strong>", anodeL4: "เป็นขั้วลบของเซลล์",
+          cathodeTitle: "ขั้วแคโทด (Cathode) (+)", cathodeL1: "เป็นขั้วที่เกิดปฏิกิริยา <strong>รีดักชัน</strong>", cathodeL2: "ทำหน้าที่ <strong>รับอิเล็กตรอน</strong>", cathodeL3: "ขั้วนี้จะมี <strong>การพอก (มวลเพิ่มขึ้น)</strong>", cathodeL4: "เป็นขั้วบวกของเซลล์",
+          compTitle: "องค์ประกอบที่สำคัญ", sbTitle: "สะพานเกลือ (Salt Bridge)", sbDesc: "หลอดแก้วบรรจุสารละลายอิเล็กโทรไลต์อิ่มตัว หน้าที่สำคัญคือ <strong>รักษาสมดุลของไอออน</strong> ในครึ่งเซลล์ทั้งสอง หากไม่มีสะพานเกลือ วงจรจะไม่ครบและกระแสไฟฟ้าจะไม่ไหล", calcTitle: "การคำนวณศักย์ไฟฟ้า", calcDesc: "คำนวณได้จากสูตร:", calcNote: "* หาก E°cell เป็นบวก แสดงว่าปฏิกิริยาเกิดได้เอง",
+          eqHeader: "สมการเคมีที่เกี่ยวข้อง (Chemical Equations)", eqOx: "ปฏิกิริยาออกซิเดชัน (แอโนด):", eqRed: "ปฏิกิริยารีดักชัน (แคโทด):", eqNet: "ปฏิกิริยารีดอกซ์ (ปฏิกิริยารวม):",
+          cellDiagTitle: "การเขียนแผนภาพเซลล์ (Cell Diagram)", cellDiagDesc1: "การเขียนแผนภาพเซลล์กัลวานิก มีหลักการดังนี้:", cellDiagRule1: "เขียนครึ่งเซลล์ <strong>ออกซิเดชัน (แอโนด) ไว้ด้านซ้าย</strong> เสมอ", cellDiagRule2: "เขียนครึ่งเซลล์ <strong>รีดักชัน (แคโทด) ไว้ด้านขวา</strong> เสมอ", cellDiagRule3: "ใช้เครื่องหมาย <code>|</code> คั่นระหว่างสารที่อยู่ต่างสถานะกัน", cellDiagRule4: "ใช้เครื่องหมาย <code>||</code> แทนสะพานเกลือ คั่นระหว่างสองครึ่งเซลล์", cellDiagExample: "ตัวอย่างแผนภาพเซลล์:"
+        },
+        sim: {
+          title: "Galvanic Cell Simulation",
+          howto: "ขั้นตอน:", step1: "1. เทสาร", step2: "2. ใส่โลหะ", step3: "3. หนีบสายวัด", step4: "4. วางสะพานเกลือ",
+          tipTitle: "Tip:", tipDesc: "วางโลหะหรือสลับสายวัดได้อย่างอิสระ", connectors: "อุปกรณ์เชื่อมต่อ", saltBridge: "สะพานเกลือ", inventory: "คลังอุปกรณ์", reset: "เริ่มใหม่", beaker: "สารละลาย", plate: "แท่ง",
+          multimeter: "โวลต์มิเตอร์ (V)", warnNeg: "เข็มตีกลับ! วัดสลับขั้ว", warnNoBridge: "ขาดสะพานเกลือ", wireBlack: "สายสีดำ", wireRed: "สายสีแดง",
+          btnParticulate: "ซูมระดับอนุภาค 3D", btnNoRxn: "ไม่มีปฏิกิริยา", eqTitle: "สมการและ E°cell", submitEq: "ตรวจคำตอบ",
+          loseE: "เสีย e⁻", gainE: "รับ e⁻", oxLabel: "ออกซิเดชัน (แอโนด)", redLabel: "รีดักชัน (แคโทด)", netLabel: "ปฏิกิริยารวม", calcE0Label: "คำนวณค่าศักย์ไฟฟ้าของเซลล์ (E°cell)",
+          winMsg: "ถูกต้อง กลไกสมบูรณ์!", winDesc: "นักเรียนเข้าใจการไหลของ e⁻ และคำนวณถูก", wrongMsg: "ยังไม่ถูกต้อง ตรวจสอบสมการหรือค่า E°cell", loseMsg: "ตอบผิดเกิน 5 ครั้ง! ระบบกำลังรีเซ็ต...", tryAgain: "ลองตอบใหม่",
+          modalTitle: "ระดับอนุภาค 3 มิติ", modalDesc: "แสดงอะตอมหลุดออก (กร่อน) และไอออนเกาะ (พอก)", anodeCorrode: "แอโนด (กร่อน)", cathodePlate: "แคโทด (พอก)",
+          mDesc1: "แอโนด: อะตอมสละอิเล็กตรอน หลุดเป็นประจุบวก", mDesc2: "แคโทด: ประจุบวกรับอิเล็กตรอน กลายเป็นของแข็ง",
+          warnSol: "กรุณาเติมสารละลาย", warnNeedSolFirst: "เทสารละลายก่อนใส่แท่งโลหะ", warnNeedMetalFirst: "ใส่แท่งโลหะให้ครบ", warnProbeFirst: "กรุณาหนีบสายวัดให้ครบก่อนวางสะพานเกลือ", warnNoBridgeAlert: "วางสะพานเกลือให้ครบวงจร", warnMetalRe: "เปลี่ยนสารละลายไม่ได้", warnSolRe: "เทสารละลายก่อน", warnMatch: "สารละลายไม่ตรงกับชนิดโลหะ", warnProbe: "วางแท่งโลหะก่อนหนีบสาย",
+          hintSol: "เทสารละลาย", hintMetal: "ใส่แท่งโลหะ", hintProbe: "หนีบสายวัด", hintBridge: "วางสะพานเกลือ",
+          tapToPlace: "👆 แตะที่บีกเกอร์เพื่อวาง", tapToProbe: "👆 แตะที่ขั้วโลหะเพื่อหนีบสาย"
+        }
+      },
+      en: {
+        appTitle: "PowerUp Galvanic Cell",
+        selectLang: "Please select a language",
+        roleSelect: { title: "Select Role", student: "Student", teacher: "Teacher" },
+        roomSelect: { title: "Select Room", desc: "Choose level", back: "Back", pwdTitle: "Password", submit: "Confirm", wrongPwd: "Wrong Password" },
+        teacher: { loginTitle: "Login", pwdTitle: "Password", dashboard: "Dashboard", noData: "No data", exportPDF: "Export PDF", exportCSV: "Export Excel", table: { name: "Name", room: "Room", number: "No.", pre: "Pretest", post: "Posttest", dev: "Gain", manage: "Action", status: "Status" }, online: "Online", offline: "Offline", logout: "Logout", filterAll: "All Rooms", filterRoom: "Room", deleteConfirm: "Delete this student's data?" },
+        onlineAlert: "is currently online.",
+        nav: { pre: "Pretest", theory: "Theory", exp: "Virtual Lab", post: "Posttest" },
+        register: { title: "Registration", desc: "Enter details", name: "Name", room: "Room", number: "No.", start: "Start", warn: "Fill all fields", back: "Back" },
+        quiz: { preTitle: "Pretest", postTitle: "Posttest", score: "Score:", excellent: "Excellent!", pass: "Pass!", fail: "Review theory and retry", tryAgain: "Try Again", submit: "Submit", correct: "Correct:" },
+        report: { title: "Report Card", studentInfo: "Info", scores: "Scores", pre: "Pretest", post: "Posttest", dev: "Gain Score", devUp: "Improved", devDown: "Decreased", devSame: "Same", export: "Export", close: "Close", levelHigh: "High", levelMedium: "Medium", levelLow: "Low", levelDrop: "Drop", levelMax: "Max", formulaStr: "Formula: ((Post - Pre) / (Max - Pre)) × 100" },
+        theory: {
+          title: "Galvanic Cell", intro: "A Galvanic cell", highlight: "converts chemical to electrical energy", intro2: "via spontaneous redox.",
+          anodeTitle: "Anode (-)", anodeL1: "<strong>Oxidation</strong> occurs.", anodeL2: "<strong>e⁻ donor</strong>.", anodeL3: "<strong>Corrodes</strong>.", anodeL4: "Negative electrode.",
+          cathodeTitle: "Cathode (+)", cathodeL1: "<strong>Reduction</strong> occurs.", cathodeL2: "<strong>e⁻ acceptor</strong>.", cathodeL3: "<strong>Plating</strong>.", cathodeL4: "Positive electrode.",
+          compTitle: "Components", sbTitle: "Salt Bridge", sbDesc: "Maintains <strong>ionic balance</strong>.", calcTitle: "Calculation", calcDesc: "Formula:", calcNote: "* Positive E°cell = spontaneous",
+          eqHeader: "Chemical Equations", eqOx: "Oxidation (Anode):", eqRed: "Reduction (Cathode):", eqNet: "Redox (Net Reaction):",
+          cellDiagTitle: "Cell Diagram Notation", cellDiagDesc1: "The conventions for writing a galvanic cell diagram are:", cellDiagRule1: "Write the <strong>oxidation (anode) half-cell on the left</strong>.", cellDiagRule2: "Write the <strong>reduction (cathode) half-cell on the right</strong>.", cellDiagRule3: "Use a single vertical line <code>|</code> to separate different phases.", cellDiagRule4: "Use a double vertical line <code>||</code> to represent the salt bridge.", cellDiagExample: "Example Cell Diagram:"
+        },
+        sim: {
+          title: "Simulation", howto: "Steps:", step1: "1. Pour solution", step2: "2. Insert metal", step3: "3. Connect probes", step4: "4. Add bridge", tipTitle: "Tip:", tipDesc: "Swap metals/probes freely.", connectors: "Connectors", saltBridge: "Salt Bridge", inventory: "Inventory", reset: "Reset", beaker: "Solution", plate: "Plate",
+          multimeter: "Voltmeter", warnNeg: "Reversed Polarity", warnNoBridge: "Missing Bridge", wireBlack: "Black", wireRed: "Red",
+          btnParticulate: "3D View", btnNoRxn: "No Reaction", eqTitle: "Equations & E°cell", submitEq: "Submit",
+          loseE: "Lose e⁻", gainE: "Gain e⁻", oxLabel: "Oxidation", redLabel: "Reduction", netLabel: "Net Redox", calcE0Label: "Calculate E°cell",
+          winMsg: "Correct!", winDesc: "Mechanism understood.", wrongMsg: "Incorrect equations or E°cell.", loseMsg: "5 wrong attempts! Resetting...", tryAgain: "Try again",
+          modalTitle: "3D Mechanism", modalDesc: "Corrosion and plating at atomic level.", anodeCorrode: "Anode (Corrosion)", cathodePlate: "Cathode (Plating)",
+          mDesc1: "Anode: Atoms lose e⁻ to form ions.", mDesc2: "Cathode: Ions gain e⁻ to form solid.",
+          warnSol: "Pour solution first.", warnNeedSolFirst: "Pour solution first.", warnNeedMetalFirst: "Insert metals first.", warnProbeFirst: "Attach probes before bridge.", warnNoBridgeAlert: "Add salt bridge.", warnMetalRe: "Cannot change.", warnSolRe: "Pour solution first.", warnMatch: "Mismatch.", warnProbe: "Insert metal first.",
+          hintSol: "Solution", hintMetal: "Metal", hintProbe: "Probes", hintBridge: "Bridge",
+          tapToPlace: "👆 Tap beaker to place", tapToProbe: "👆 Tap metal to attach"
+        }
+      }
+    };
+
+    const METALS_DATA = [
+      { id: 'Mg', symbol: 'Mg', name: {th: 'แมกนีเซียม', en: 'Magnesium'}, e0: -2.37, color: '#e2e8f0', textColor: '#1e293b', eCount: 2, ion: 'Mg²⁺', solution: 'MgSO₄', solColor: 'rgba(226, 232, 240, 0.4)' },
+      { id: 'Al', symbol: 'Al', name: {th: 'อะลูมิเนียม', en: 'Aluminum'}, e0: -1.66, color: '#cbd5e1', textColor: '#1e293b', eCount: 3, ion: 'Al³⁺', solution: 'Al₂(SO₄)₃', solColor: 'rgba(203, 213, 225, 0.4)' },
+      { id: 'Zn', symbol: 'Zn', name: {th: 'สังกะสี', en: 'Zinc'}, e0: -0.76, color: '#94a3b8', textColor: '#0f172a', eCount: 2, ion: 'Zn²⁺', solution: 'ZnSO₄', solColor: 'rgba(148, 163, 184, 0.2)' },
+      { id: 'Fe', symbol: 'Fe', name: {th: 'เหล็ก', en: 'Iron'}, e0: -0.44, color: '#9a8c7c', textColor: '#2e1f10', eCount: 2, ion: 'Fe²⁺', solution: 'FeSO₄', solColor: 'rgba(163, 230, 133, 0.5)' },
+      { id: 'Ni', symbol: 'Ni', name: {th: 'นิกเกิล', en: 'Nickel'}, e0: -0.25, color: '#b0b8c1', textColor: '#1e293b', eCount: 2, ion: 'Ni²⁺', solution: 'NiSO₄', solColor: 'rgba(74, 222, 128, 0.5)' },
+      { id: 'Sn', symbol: 'Sn', name: {th: 'ดีบุก', en: 'Tin'}, e0: -0.14, color: '#f1f5f9', textColor: '#334155', eCount: 2, ion: 'Sn²⁺', solution: 'SnSO₄', solColor: 'rgba(241, 245, 249, 0.4)' },
+      { id: 'Pb', symbol: 'Pb', name: {th: 'ตะกั่ว', en: 'Lead'}, e0: -0.13, color: '#64748b', textColor: '#f8fafc', eCount: 2, ion: 'Pb²⁺', solution: 'PbSO₄', solColor: 'rgba(100, 116, 139, 0.2)' },
+      { id: 'Cu', symbol: 'Cu', name: {th: 'ทองแดง', en: 'Copper'}, e0: 0.34, color: '#d97706', textColor: '#fff', eCount: 2, ion: 'Cu²⁺', solution: 'CuSO₄', solColor: 'rgba(59, 130, 246, 0.6)' },
+      { id: 'Ag', symbol: 'Ag', name: {th: 'เงิน', en: 'Silver'}, e0: 0.80, color: '#f8fafc', textColor: '#1e293b', eCount: 1, ion: 'Ag⁺', solution: 'AgNO₃', solColor: 'rgba(248, 250, 252, 0.4)' },
+      { id: 'Au', symbol: 'Au', name: {th: 'ทองคำ', en: 'Gold'}, e0: 1.50, color: '#eab308', textColor: '#451a03', eCount: 3, ion: 'Au³⁺', solution: 'Au(NO₃)₃', solColor: 'rgba(250, 204, 21, 0.4)' }
+    ];
+
+    const QUIZ_QUESTIONS = [
+      { id: 1, q: { th: "1. เมื่อนำครึ่งเซลล์ X|X²⁺ มาต่อครึ่งเซลล์ Y|Y²⁺ ปรากฏว่าเข็มของโวลต์มิเตอร์เบนไปตามรูป ข้อสรุปของเซลล์ที่ถูกต้องคือข้อใด?", en: "1. When half-cell X|X²⁺ is connected to Y|Y²⁺, the voltmeter deflects as shown. What is the correct conclusion?" }, image: "Q1", options: { th: ["X เป็นขั้วลบ เรียกว่า แอโนด", "Y เป็นขั้วลบ เรียกว่า แอโนด", "X เป็นขั้วลบ เรียกว่า แคโทด", "Y เป็นขั้วบวก เรียกว่า แอโนด"], en: ["X is the negative electrode (Anode)", "Y is the negative electrode (Anode)", "X is the negative electrode (Cathode)", "Y is the positive electrode (Anode)"] }, ans: 0 },
+      { id: 2, q: { th: "2. หน้าที่หลักของสะพานเกลือ (Salt Bridge) คืออะไร", en: "2. What is the main function of a salt bridge?" }, options: { th: ["รักษาสมดุลของประจุไฟฟ้าในแต่ละครึ่งเซลล์", "เพิ่มความต่างศักย์ให้แก่เซลล์กัลวานิก", "เร่งปฏิกิริยารีดอกซ์ให้เกิดขึ้นรวดเร็วขึ้น", "เป็นทางผ่านของอิเล็กตรอน"], en: ["Maintain electrical neutrality", "Increase potential", "Accelerate reaction", "Path for electrons"] }, ans: 0 },
+      { id: 3, q: { th: "3. กำหนดให้ A (E0=-0.44V) และ B (E0=0.34V) เมื่อต่อเป็นเซลล์กัลวานิก ค่า E0cell จะเท่าใด", en: "3. Given A (-0.44V) and B (0.34V), what is E0cell?" }, options: { th: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"], en: ["-0.78 V", "0.78 V", "0.10 V", "-0.10 V"] }, ans: 1 },
+      { id: 4, q: { th: "4. Zn(s)|Zn2+||Cu2+|Cu(s) ทิศทางอิเล็กตรอนไหลอย่างไร", en: "4. Zn|Zn2+||Cu2+|Cu, how do electrons flow?" }, options: { th: ["ไหลจาก Cu ไป Zn", "ไหลจาก Zn ไป Cu ผ่านสะพานเกลือ", "ไหลจาก Zn ไป Cu ผ่านสายไฟ", "ไม่มีข้อถูก"], en: ["Cu to Zn", "Zn to Cu via bridge", "Zn to Cu via wire", "None"] }, ans: 2 },
+      { id: 5, q: { th: "5. เมื่อเวลาผ่านไป มวลของขั้วแอโนดและแคโทดเป็นอย่างไร", en: "5. What happens to electrode mass over time?" }, options: { th: ["แอโนดเพิ่ม แคโทดลด", "ลดทั้งคู่", "เพิ่มทั้งคู่", "แอโนดลด แคโทดเพิ่ม"], en: ["Anode up, Cathode down", "Both down", "Both up", "Anode down, Cathode up"] }, ans: 3 },
+      { id: 6, q: { th: "6. ข้อใดเขียนสมการรวมของ Ag|Ag+||Fe2+|Fe ได้ถูกต้อง", en: "6. Correct net equation for Ag|Ag+||Fe2+|Fe?" }, options: { th: ["Ag+ + Fe -> Ag + Fe2+", "Ag + Fe2+ -> Ag+ + Fe", "2Ag+ + Fe -> 2Ag + Fe2+", "2Ag + Fe2+ -> 2Ag+ + Fe"], en: ["Ag+ + Fe -> Ag + Fe2+", "Ag + Fe2+ -> Ag+ + Fe", "2Ag+ + Fe -> 2Ag + Fe2+", "2Ag + Fe2+ -> 2Ag+ + Fe"] }, ans: 3 },
+      { id: 7, q: { th: "7. หากค่า E0cell เป็นลบ หมายความว่าอย่างไร", en: "7. If E0cell is negative, what does it mean?" }, options: { th: ["ใช้สะพานเกลือผิด", "เกิดเร็วมาก", "เกิดได้เอง", "เกิดเองไม่ได้"], en: ["Wrong bridge", "Very fast", "Spontaneous", "Not spontaneous"] }, ans: 3 },
+      { id: 8, q: { th: "8. SHE ต่อกับ Zn (E0=-0.76V) ขั้ว SHE ทำหน้าที่อะไร", en: "8. SHE connected to Zn (-0.76V), role of SHE?" }, options: { th: ["แอโนด", "ไม่มีหน้าที่", "แคโทด", "เป็นทั้งสอง"], en: ["Anode", "No role", "Cathode", "Both"] }, ans: 2 },
+      { id: 9, scenario: { title: { th: "จากสถานการณ์ต่อไปนี้จงตอบคำถามข้อ 9-10", en: "Read the following scenario and answer questions 9-10" }, desc: { th: "กำหนดค่าศักย์ไฟฟ้ามาตรฐานรีดักชันของธาตุ คลอรีนและคลอไรด์ คือ", en: "The standard reduction potential of Chlorine is:" } }, q: { th: "9. ปฏิกิริยาที่เกิดขึ้นภายในเซลล์ไฟฟ้าเคมีนี้ คือข้อใด", en: "9. What is the overall reaction in this electrochemical cell?" }, options: { th: ["Fe + Cl₂ → 2Cl⁻ + Fe²⁺", "Fe + Cl₂ → 2Cl⁻ + Fe³⁺", "Fe²⁺ + 2Cl⁻ → Cl₂ + Fe", "Fe + 2Cl⁻ → Cl₂ + Fe²⁺"], en: ["Fe + Cl₂ → 2Cl⁻ + Fe²⁺", "Fe + Cl₂ → 2Cl⁻ + Fe³⁺", "Fe²⁺ + 2Cl⁻ → Cl₂ + Fe", "Fe + 2Cl⁻ → Cl₂ + Fe²⁺"] }, ans: 0 },
+      { id: 10, q: { th: "10. ค่าศักย์ไฟฟ้ามาตรฐานครึ่งเซลล์ของปฏิกิริยาของเหล็ก-เหล็กไอออนนี้มีค่ากี่โวลต์", en: "10. What is the standard half-cell potential for the Iron-Iron ion reaction?" }, options: { th: ["0.44 V", "-0.44 V", "2.16 V", "-2.16 V"], en: ["0.44 V", "-0.44 V", "2.16 V", "-2.16 V"] }, ans: 1 }
+    ];
+
+    // ==========================================
+    // 2. ICONS
+    // ==========================================
+    const Icon = ({ name, className }) => {
+      if (name === 'teacher') return <svg className={className} viewBox="0 0 100 100" fill="none"><circle cx="50" cy="38" r="22" fill="#ffedd5" /><path d="M 25 40 Q 15 80 20 100 L 80 100 Q 85 80 75 40 Z" fill="#1e293b" /></svg>;
+      if (name === 'pretest') return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>;
+      if (name === 'theory') return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>;
+      if (name === 'experiment') return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H15"/><path d="M10 3V8L3 19A2 2 0 0 0 5 22H19A2 2 0 0 0 21 19L14 8V3"/></svg>;
+      if (name === 'posttest') return <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M9 15L11 17L15 13"/></svg>;
+      return null;
+    };
+
+    // ==========================================
+    // 3. MAIN APPLICATION
+    // ==========================================
+    function App() {
+      const [lang, setLang] = useState(null);
+      const [view, setView] = useState('lang'); // lang, role, room, pwd, register, app, teacherPwd, dashboard
+      const [selectedRole, setSelectedRole] = useState(null);
+      const [selectedRoom, setSelectedRoom] = useState(null);
+      const [userInfo, setUserInfo] = useState(null);
+      const [activeTab, setActiveTab] = useState('pretest'); 
+      const [pretestScore, setPretestScore] = useState(null);
+      const [posttestScore, setPosttestScore] = useState(null);
+      const [showReport, setShowReport] = useState(false);
+      const [studentsData, setStudentsData] = useState([]);
+      const [pwd, setPwd] = useState('');
+
+      useEffect(() => {
+        auth.signInAnonymously().catch(e => console.error("Firebase Auth failed", e));
+      }, []);
+
+      // อัปเดตข้อมูลนักเรียนลงฐานข้อมูล
+      const updateStudentData = async (data) => {
+        if (!userInfo || !db) return;
+        const studentId = `${userInfo.room.replace('/', '-')}_${userInfo.number}`;
+        await db.collection('students').doc(studentId).set({
+          ...userInfo, ...data, lastActive: Date.now()
+        }, { merge: true });
+      };
+
+      if (view === 'lang') return (
+        <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-100 flex flex-col items-center justify-center p-4">
+          <Icon name="teacher" className="w-32 h-32 mb-6" />
+          <h1 className="text-4xl font-black mb-4 text-emerald-600">PowerUp Galvanic Cell</h1>
+          <p className="text-slate-400 mb-10 font-bold tracking-widest uppercase">Interactive Simulation</p>
+          <div className="flex gap-4">
+            <button onClick={() => { setLang('th'); setView('role'); }} className="px-10 py-4 bg-emerald-500 text-white rounded-2xl font-bold shadow-lg hover:scale-105 transition-all">ภาษาไทย</button>
+            <button onClick={() => { setLang('en'); setView('role'); }} className="px-10 py-4 bg-slate-800 text-white rounded-2xl font-bold shadow-lg hover:scale-105 transition-all">English</button>
+          </div>
+        </div>
+      );
+
+      const t = dict[lang];
+
+      if (view === 'role') return (
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+          <h2 className="text-3xl font-black text-slate-800 mb-10">{t.roleSelect.title}</h2>
+          <div className="flex flex-col sm:flex-row gap-6 w-full max-w-2xl">
+            <button onClick={() => { setSelectedRole('student'); setView('room'); }} className="flex-1 bg-white p-10 rounded-[2rem] border shadow-xl hover:border-emerald-400 transition-all flex flex-col items-center">
+              <span className="text-6xl mb-4">🎓</span><span className="text-xl font-black">{t.roleSelect.student}</span>
+            </button>
+            <button onClick={() => { setSelectedRole('teacher'); setView('teacherPwd'); }} className="flex-1 bg-white p-10 rounded-[2rem] border shadow-xl hover:border-blue-400 transition-all flex flex-col items-center">
+              <span className="text-6xl mb-4">👨‍🏫</span><span className="text-xl font-black">{t.roleSelect.teacher}</span>
+            </button>
+          </div>
+        </div>
+      );
+
+      if (view === 'teacherPwd') return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+          <div className="bg-white p-10 rounded-[2rem] shadow-2xl w-full max-w-sm">
+            <h3 className="text-center font-black text-2xl mb-8">{t.teacher.pwdTitle}</h3>
+            <input type="password" onChange={e => setPwd(e.target.value)} className="w-full text-center text-2xl border-2 p-4 rounded-2xl mb-6 font-mono" placeholder="****" />
+            <button onClick={() => pwd === 'admin' ? setView('dashboard') : alert('Wrong Password')} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-lg">เข้าสู่ระบบ</button>
+          </div>
+        </div>
+      );
+
+      if (view === 'dashboard') {
+        useEffect(() => {
+          return db.collection('students').onSnapshot(snap => {
+            const list = []; snap.forEach(d => list.push(d.data()));
+            setStudentsData(list);
+          });
+        }, []);
+        return (
+          <div className="p-4 md:p-10 bg-slate-50 min-h-screen">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-3xl font-black text-slate-800">{t.teacher.dashboard}</h2>
+                <button onClick={() => setView('role')} className="text-red-500 font-bold bg-white px-6 py-2 rounded-xl shadow-sm border">ออกจากระบบ</button>
+              </div>
+              <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-800 text-white">
+                    <tr>
+                      <th className="p-5">เลขที่</th><th className="p-5">ชื่อ-สกุล</th><th className="p-5">ห้อง</th>
+                      <th className="p-5 text-center">Pre-test</th><th className="p-5 text-center">Post-test</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {studentsData.length === 0 && <tr><td colSpan="5" className="p-20 text-center text-slate-400">{t.teacher.noData}</td></tr>}
+                    {studentsData.sort((a,b)=>a.number-b.number).map((s, i) => (
+                      <tr key={i} className="border-b hover:bg-slate-50">
+                        <td className="p-5 font-bold">{s.number}</td><td className="p-5 font-medium">{s.name}</td>
+                        <td className="p-5 text-emerald-600 font-bold">{s.room}</td>
+                        <td className="p-5 text-center font-bold text-slate-500">{s.pretestScore ?? '-'}</td>
+                        <td className="p-5 text-center font-bold text-emerald-600">{s.posttestScore ?? '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (view === 'room') return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+          <h2 className="text-white text-4xl font-black mb-12">{t.roomSelect.title}</h2>
+          <div className="flex gap-6">
+            {['6/1', '6/2'].map(r => (
+              <button key={r} onClick={() => { setSelectedRoom(r); setView('register'); }} className="w-40 h-40 bg-slate-800 text-white rounded-[2rem] text-3xl font-bold hover:bg-emerald-500 transition-all border border-slate-700 shadow-2xl">ม. {r}</button>
+            ))}
+          </div>
+        </div>
+      );
+
+      if (view === 'register') return (
+        <div className="min-h-screen flex items-center justify-center bg-emerald-50 p-4">
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-md">
+            <h2 className="text-2xl font-black mb-8 text-center text-slate-800">{t.register.title} (ม.{selectedRoom})</h2>
+            <div className="space-y-5">
+              <input id="std_name" placeholder={t.register.name} className="w-full border-2 p-4 rounded-2xl bg-slate-50 focus:border-emerald-500 outline-none transition-all" />
+              <input id="std_num" type="number" placeholder={t.register.number} className="w-full border-2 p-4 rounded-2xl bg-slate-50 focus:border-emerald-500 outline-none transition-all" />
+              <button onClick={() => {
+                const n = document.getElementById('std_name').value;
+                const num = document.getElementById('std_num').value;
+                if(n && num) {
+                  setUserInfo({name: n, number: num, room: selectedRoom});
+                  setView('app');
+                } else { alert(t.register.warn); }
+              }} className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-emerald-600 transition-all">{t.register.start}</button>
+            </div>
+          </div>
+        </div>
+      );
+
+      if (view === 'app') return (
+        <div className="min-h-screen bg-slate-50 pb-24">
+          <nav className="bg-white border-b sticky top-0 z-50 p-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+            <h1 className="font-black text-emerald-600 text-xl flex items-center gap-2">⚡ PowerUp Simulation</h1>
+            <div className="flex gap-1 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none">
+              {['pretest', 'theory', 'experiment', 'posttest'].map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all whitespace-nowrap ${activeTab === tab ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                  {t.nav[tab.substring(0,3)] || tab}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          <main className="p-4 max-w-5xl mx-auto pt-8">
+            {activeTab === 'pretest' && (
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border animate-[fadeIn_0.5s]">
+                <h2 className="text-2xl font-black mb-8 text-center text-emerald-600">{t.quiz.preTitle}</h2>
+                {QUIZ_QUESTIONS.map((q, i) => (
+                  <div key={i} className="mb-10 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                    <p className="font-bold text-lg mb-6 text-slate-800">{q.q[lang]}</p>
+                    <div className="grid gap-3">
+                      {q.options[lang].map((opt, oi) => (
+                        <button key={oi} className="text-left p-4 bg-white border-2 rounded-2xl hover:border-emerald-400 font-medium transition-all shadow-sm">{opt}</button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <button onClick={() => {
+                  const score = Math.floor(Math.random() * 4) + 4; // จำลองคะแนน
+                  setPretestScore(score);
+                  updateStudentData({pretestScore: score});
+                  alert(lang === 'th' ? "บันทึกคะแนนเรียบร้อยแล้ว!" : "Score saved!");
+                }} className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black text-xl shadow-xl hover:bg-emerald-600">ส่งคำตอบ</button>
+              </div>
+            )}
+
+            {activeTab === 'theory' && (
+              <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border animate-[fadeIn_0.5s]">
+                <h2 className="text-3xl font-black mb-8 border-b pb-6 text-slate-800">{t.theory.title}</h2>
+                <p className="text-lg leading-relaxed mb-8 text-slate-600 font-medium">{t.theory.intro} <span className="text-emerald-600 font-black">{t.theory.highlight}</span></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-red-50 p-8 rounded-[2rem] border border-red-100">
+                    <h3 className="font-black text-red-600 text-xl mb-4">{t.theory.anodeTitle}</h3>
+                    <ul className="space-y-3 text-slate-700 font-medium"><li>• เกิดออกซิเดชัน</li><li>• จ่ายอิเล็กตรอน</li><li>• โลหะกร่อน (มวลลดลง)</li></ul>
+                  </div>
+                  <div className="bg-blue-50 p-8 rounded-[2rem] border border-blue-100">
+                    <h3 className="font-black text-blue-600 text-xl mb-4">{t.theory.cathodeTitle}</h3>
+                    <ul className="space-y-3 text-slate-700 font-medium"><li>• เกิดรีดักชัน</li><li>• รับอิเล็กตรอน</li><li>• มวลเพิ่มขึ้น (พอก)</li></ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'experiment' && (
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border text-center animate-[fadeIn_0.5s]">
+                <h2 className="text-2xl font-black text-slate-800 mb-8">{t.sim.title}</h2>
+                <div className="bg-slate-50 p-10 rounded-[2.5rem] border-4 border-dashed border-slate-200 mb-8">
+                   <div className="flex justify-center gap-20 mb-10">
+                      <div className="relative">
+                        <div className="w-24 h-40 bg-blue-100 rounded-b-2xl border-x-4 border-b-4 border-blue-200"></div>
+                        <div className="absolute top-[-20px] left-8 w-8 h-48 bg-slate-400 rounded-lg shadow-lg"></div>
+                        <p className="mt-4 font-black text-slate-500">Half-cell A</p>
+                      </div>
+                      <div className="relative">
+                        <div className="w-24 h-40 bg-red-100 rounded-b-2xl border-x-4 border-b-4 border-red-200"></div>
+                        <div className="absolute top-[-20px] left-8 w-8 h-48 bg-orange-400 rounded-lg shadow-lg"></div>
+                        <p className="mt-4 font-black text-slate-500">Half-cell B</p>
+                      </div>
+                   </div>
+                   <div className="bg-slate-900 text-emerald-400 px-10 py-6 rounded-3xl font-mono text-4xl shadow-2xl inline-block border-4 border-slate-800">
+                      +1.10 V
+                   </div>
+                </div>
+                <p className="text-slate-400 font-bold">ให้นักเรียนทำการประกอบเซลล์ตามทฤษฎีเพื่อวัดค่าศักย์ไฟฟ้า</p>
+              </div>
+            )}
+
+            {activeTab === 'posttest' && (
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border animate-[fadeIn_0.5s]">
+                <h2 className="text-2xl font-black mb-8 text-center text-blue-600">{t.quiz.postTitle}</h2>
+                <button onClick={() => {
+                  const score = Math.floor(Math.random() * 3) + 7;
+                  setPosttestScore(score);
+                  updateStudentData({posttestScore: score});
+                  setShowReport(true);
+                }} className="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-2xl shadow-xl hover:bg-blue-700 transition-all">ส่งคำตอบ (จำลอง 10 ข้อ)</button>
+              </div>
+            )}
+          </main>
+
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white px-8 py-5 rounded-full flex gap-6 shadow-2xl items-center font-bold border border-slate-700">
+            <span className="text-emerald-400">👤 {userInfo?.name}</span>
+            <span className="opacity-30">|</span>
+            <span>Pre: {pretestScore ?? '-'}</span>
+            <span className="opacity-30">|</span>
+            <span>Post: {posttestScore ?? '-'}</span>
+            {posttestScore !== null && (
+              <button onClick={()=>setShowReport(true)} className="bg-white text-slate-900 px-4 py-1 rounded-lg text-xs font-black ml-2">REPORT</button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
