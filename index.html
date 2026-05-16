@@ -32,14 +32,15 @@
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-    // กรุณาใส่ค่า Firebase Config ของคุณตรงนี้
+    // ใส่ค่า Firebase Config ของคุณแล้ว
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyCwM1aSbPOyHQ6zpfm5_f20WUDQiBXY3fg",
+      authDomain: "galvanic-cell-simulation.firebaseapp.com",
+      projectId: "galvanic-cell-simulation",
+      storageBucket: "galvanic-cell-simulation.firebasestorage.app",
+      messagingSenderId: "130157386891",
+      appId: "1:130157386891:web:1bc4a53c089124754d088e",
+      measurementId: "G-5YZLRGLHSH"
     };
 
     const app = initializeApp(firebaseConfig);
