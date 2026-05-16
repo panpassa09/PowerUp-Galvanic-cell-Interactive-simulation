@@ -351,10 +351,10 @@
       const handleDelete = async (uid) => {
         if (window.confirm(t.deleteConfirm)) {
           try {
-            const currentAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'students', uid));
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', uid));
           } catch (err) {
             console.error("Error deleting document:", err);
+            alert("ไม่สามารถลบได้ กรุณาตรวจสอบการเชื่อมต่อ: " + err.message);
           }
         }
       };
